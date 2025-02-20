@@ -1,0 +1,10 @@
+# Build files  
+build/   
+*.o
+*.bin
+*.elf
+*.a  
+*.so  
+
+# IDE/Editor files  
+.vscode/
