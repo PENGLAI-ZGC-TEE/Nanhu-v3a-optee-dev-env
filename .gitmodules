@@ -1,0 +1,3 @@
+[submodule "qemu"]
+	path = qemu
+	url = git@gitlab.bosoc.cc:openxiangshan/qemu.git
