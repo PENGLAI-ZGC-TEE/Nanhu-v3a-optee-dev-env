@@ -13,6 +13,13 @@ qemu_config_args := --target-list=riscv64-softmmu
 qemu_machine := -machine bosc-nh
 qemu_args := -smp 2 -m 2G
 
+# Linux Variables
+linux_srcdir := $(CURRENT_DIR)/linux
+linux_builddir := $(BUILD_DIR)/linux
+linux_config := $(CONFIG_DIR)/xiangshan.config
+linux_vmlinux := $(linux_builddir)/vmlinux
+linux_image := $(linux_builddir)/arch/riscv/boot/Image
+
 ###########
 # qemu
 ###########
@@ -25,12 +32,34 @@ $(qemu_builddir)/config-host.mak:
 	cd $(qemu_builddir) && \
 	$(qemu_srcdir)/configure $(qemu_config_args)
 
+###########
+# linux
+###########
+.PHONY: linux
+linux: $(linux_builddir)/.config
+	$(MAKE) -C $(linux_srcdir) O=$(linux_builddir) -j $(NPROC) \
+	ARCH=riscv CROSS_COMPILE=$(CROSS_COMPILE) \
+
+$(linux_builddir)/.config: $(linux_config)
+	mkdir -p $(dir $@)
+	cp -f $(linux_config) $(linux_srcdir)/arch/riscv/configs/
+	$(MAKE) -C $(linux_srcdir) O=$(linux_builddir) -j $(NPROC) \
+	ARCH=riscv CROSS_COMPILE=$(CROSS_COMPILE) defconfig xiangshan.config
+	rm -f $(linux_srcdir)/arch/riscv/configs/xiangshan.config
+
 ##########
 # clean
 ##########
-.PHONY: qemu-clean qemu-distclean
+.PHONY: qemu-clean qemu-distclean linux-clean linux-distclean
 qemu-clean:
 	$(MAKE) -C $(qemu_builddir) clean
 
 qemu-distclean:
 	rm -rf $(qemu_builddir)
+
+linux-clean:
+	$(MAKE) -C $(linux_builddir) clean
+
+linux-distclean:
+	$(MAKE) -C $(linux_srcdir) distclean
+	rm -rf $(linux_builddir)
