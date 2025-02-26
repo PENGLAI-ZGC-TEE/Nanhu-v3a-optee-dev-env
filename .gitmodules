@@ -1,3 +1,6 @@
 [submodule "qemu"]
 	path = qemu
 	url = git@gitlab.bosoc.cc:openxiangshan/qemu.git
+[submodule "linux"]
+	path = linux
+	url = https://gitlab.com/riseproject/riscv-optee/linux.git
