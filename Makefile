@@ -20,6 +20,10 @@ linux_config := $(CONFIG_DIR)/xiangshan.config
 linux_vmlinux := $(linux_builddir)/vmlinux
 linux_image := $(linux_builddir)/arch/riscv/boot/Image
 
+# FDT Variables
+dts_file := $(CONFIG_DIR)/nanhu-v3a.dts
+dtb_file := $(BUILD_DIR)/nanhu-v3a.dtb
+
 ###########
 # qemu
 ###########
@@ -47,10 +51,17 @@ $(linux_builddir)/.config: $(linux_config)
 	ARCH=riscv CROSS_COMPILE=$(CROSS_COMPILE) defconfig xiangshan.config
 	rm -f $(linux_srcdir)/arch/riscv/configs/xiangshan.config
 
+###########
+# FDT
+###########
+.PHONY: dtb
+dtb:
+	dtc -I dts -O dtb -o $(dtb_file) $(dts_file)
+
 ##########
 # clean
 ##########
-.PHONY: qemu-clean qemu-distclean linux-clean linux-distclean
+.PHONY: qemu-clean qemu-distclean linux-clean linux-distclean dtb-clean
 qemu-clean:
 	$(MAKE) -C $(qemu_builddir) clean
 
@@ -63,3 +74,6 @@ linux-clean:
 linux-distclean:
 	$(MAKE) -C $(linux_srcdir) distclean
 	rm -rf $(linux_builddir)
+
+dtb-clean:
+	rm -f $(dtb_file)
