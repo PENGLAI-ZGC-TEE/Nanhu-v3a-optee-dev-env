@@ -4,6 +4,7 @@ BUILD_DIR := $(CURRENT_DIR)/build
 CONFIG_DIR := $(CURRENT_DIR)/config
 NPROC := $(shell nproc)
 CROSS_COMPILE := riscv64-linux-gnu-
+NHART := 2
 
 # Qemu Variables
 qemu_srcdir := $(CURRENT_DIR)/qemu
@@ -11,7 +12,7 @@ qemu_builddir := $(BUILD_DIR)/qemu
 qemu_target := $(qemu_builddir)/qemu-system-riscv64
 qemu_config_args := --target-list=riscv64-softmmu
 qemu_machine := -machine bosc-nh
-qemu_args := -smp 2 -m 2G
+qemu_args := -smp $(NHART) -m 2G
 
 # Linux Variables
 linux_srcdir := $(CURRENT_DIR)/linux
@@ -23,6 +24,15 @@ linux_image := $(linux_builddir)/arch/riscv/boot/Image
 # FDT Variables
 dts_file := $(CONFIG_DIR)/nanhu-v3a.dts
 dtb_file := $(BUILD_DIR)/nanhu-v3a.dtb
+
+# OP-TEE Variables
+optee_os_srcdir := $(CURRENT_DIR)/optee_os
+optee_os_builddir := $(BUILD_DIR)/optee_os
+optee_os_platdir := $(CONFIG_DIR)/plat-nanhu
+optee_os_bin := $(optee_os_builddir)/core/tee.bin
+optee_os_elf := $(optee_os_builddir)/core/tee.elf
+optee_os_tddram_start := 0x80200000
+optee_os_tddram_size := 0x01000000
 
 ###########
 # qemu
@@ -58,10 +68,23 @@ $(linux_builddir)/.config: $(linux_config)
 dtb:
 	dtc -I dts -O dtb -o $(dtb_file) $(dts_file)
 
+###########
+# OT-TEE
+###########
+.PHONY: optee_os
+optee_os:
+	mkdir -p $(optee_os_builddir)
+	cp -rf $(optee_os_platdir) $(optee_os_srcdir)/core/arch/riscv/
+	$(MAKE) -C $(optee_os_srcdir) O=$(optee_os_builddir) \
+	ARCH=riscv PLATFORM=nanhu \
+	CFG_TEE_CORE_NB_CORE=$(NHART) CFG_NUM_THREADS=$(NHART) \
+	-j $(NPROC)
+	rm -rf $(optee_os_srcdir)/core/arch/riscv/plat-nanhu
+
 ##########
 # clean
 ##########
-.PHONY: qemu-clean qemu-distclean linux-clean linux-distclean dtb-clean
+.PHONY: qemu-clean qemu-distclean linux-clean linux-distclean dtb-clean optee_os-clean
 qemu-clean:
 	$(MAKE) -C $(qemu_builddir) clean
 
@@ -77,3 +100,7 @@ linux-distclean:
 
 dtb-clean:
 	rm -f $(dtb_file)
+
+optee_os-clean:
+	rm -rf $(optee_os_builddir)
+	rm -rf $(optee_os_srcdir)/core/arch/riscv/plat-nanhu
