@@ -34,6 +34,13 @@ optee_os_elf := $(optee_os_builddir)/core/tee.elf
 optee_os_tddram_start := 0x80200000
 optee_os_tddram_size := 0x01000000
 
+# OpenSBI Variables
+opensbi_srcdir := $(CURRENT_DIR)/opensbi
+opensbi_builddir := $(BUILD_DIR)/opensbi
+opensbi_bindir := $(opensbi_builddir)/platform/generic/firmware
+opensbi_payload_bin := $(opensbi_bindir)/fw_payload.bin
+opensbi_payload_elf := $(opensbi_bindir)/fw_payload.elf
+
 ###########
 # qemu
 ###########
@@ -75,11 +82,25 @@ dtb:
 optee_os:
 	mkdir -p $(optee_os_builddir)
 	cp -rf $(optee_os_platdir) $(optee_os_srcdir)/core/arch/riscv/
-	$(MAKE) -C $(optee_os_srcdir) O=$(optee_os_builddir) \
+	$(MAKE) -C $(optee_os_srcdir) O=$(optee_os_builddir) -j $(NPROC) \
 	ARCH=riscv PLATFORM=nanhu \
-	CFG_TEE_CORE_NB_CORE=$(NHART) CFG_NUM_THREADS=$(NHART) \
-	-j $(NPROC)
+	CFG_TEE_CORE_NB_CORE=$(NHART) CFG_NUM_THREADS=$(NHART)
 	rm -rf $(optee_os_srcdir)/core/arch/riscv/plat-nanhu
+
+###########
+# opensbi
+###########
+.PHONY: opensbi
+opensbi:
+	mkdir -p $(opensbi_builddir)
+	$(MAKE) -C $(opensbi_srcdir) O=$(opensbi_builddir) -j $(NPROC) \
+	CROSS_COMPILE=$(CROSS_COMPILE) \
+	PLATFORM=generic \
+	FW_PAYLOAD_PATH=$(linux_image) \
+	FW_TEXT_START=0x80000000 \
+	FW_FDT_PATH=$(dtb_file) \
+	FW_JUMP_FDT_OFFSET=0x200000 \
+	FW_PAYLOAD_OFFSET=0x400000
 
 ##########
 # clean
