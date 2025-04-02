@@ -10,6 +10,8 @@ qemu_srcdir := $(CURRENT_DIR)/qemu
 qemu_builddir := $(BUILD_DIR)/qemu
 qemu_target := $(qemu_builddir)/qemu-system-riscv64
 qemu_config_args := --target-list=riscv64-softmmu
+qemu_machine := -machine bosc-nanhu
+qemu_args := -cpu bosc-nanhu -smp 2 -m 8G
 
 # Linux Variables
 linux_srcdir := $(CURRENT_DIR)/linux
@@ -116,6 +118,31 @@ opensbi: $(dtb_file)
 	FW_TEXT_START=$(opensbi_start) \
 	FW_FDT_PATH=$(dtb_file) \
 	FW_JUMP_ADDR=$(linux_start)
+
+##########
+# run
+##########
+.PHONY: run
+run: $(opensbi_jump_bin) $(optee_os_bin) $(linux_image)
+	$(qemu_target) $(qemu_machine) $(qemu_args) \
+	-d guest_errors -D guest_log.txt \
+	-bios $(opensbi_jump_bin) \
+	-device loader,file=$(optee_os_bin),addr=$(optee_os_tddram_start) \
+	-device loader,file=$(linux_image),addr=$(linux_start) \
+	-nographic
+
+##########
+# debug
+##########
+.PHONY: debug
+debug: $(opensbi_jump_bin) $(optee_os_bin) $(linux_image)
+	$(qemu_target) $(qemu_machine) $(qemu_args) \
+	-d guest_errors -D guest_log.txt \
+	-bios $(opensbi_jump_elf) \
+	-device loader,file=$(optee_os_bin),addr=$(optee_os_tddram_start) \
+	-device loader,file=$(linux_image),addr=$(linux_start) \
+	-nographic \
+	-s -S
 
 ###########
 # clean

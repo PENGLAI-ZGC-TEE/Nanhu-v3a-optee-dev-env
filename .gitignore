@@ -11,3 +11,6 @@ build/
 
 # Rootfs
 rootfs/
+
+# QEMU log
+guest_log.txt
