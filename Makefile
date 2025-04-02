@@ -22,6 +22,10 @@ linux_image := $(linux_builddir)/arch/riscv/boot/Image
 rootfs_srcdir := $(CURRENT_DIR)/rootfs
 rootfs_target := $(CONFIG_DIR)/rootfs_nopasswd.cpio
 
+# Device Tree Variables
+dts_file := $(CONFIG_DIR)/nanhu-v3a.dts
+dtb_file := $(BUILD_DIR)/nanhu-v3a.dtb
+
 # OP-TEE Variables
 optee_os_srcdir := $(CURRENT_DIR)/optee_os
 optee_os_builddir := $(BUILD_DIR)/optee_os
@@ -74,6 +78,13 @@ $(linux_builddir)/.config:
 	rm -f $(linux_srcdir)/arch/riscv/configs/xiangshan.config
 
 ###########
+# DTB
+###########
+.PHONY: dtb
+dtb:
+	dtc -I dts -O dtb -o $(dtb_file) $(dts_file)
+
+###########
 # OT-TEE
 ###########
 .PHONY: optee_os
@@ -87,7 +98,7 @@ optee_os:
 ###########
 # clean
 ###########
-.PHONY: qemu-clean qemu-distclean linux-clean linux-distclean optee_os-clean
+.PHONY: qemu-clean qemu-distclean linux-clean linux-distclean optee_os-clean dtb-clean
 qemu-clean:
 	$(MAKE) -C $(qemu_builddir) clean
 
@@ -103,3 +114,6 @@ linux-distclean:
 optee_os-clean:
 	rm -rf $(optee_os_builddir)
 	rm -rf $(optee_os_srcdir)/core/arch/riscv/plat-nanhu
+
+dtb-clean:
+	rm -f $(dtb_file)
