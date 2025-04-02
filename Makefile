@@ -22,6 +22,14 @@ linux_image := $(linux_builddir)/arch/riscv/boot/Image
 rootfs_srcdir := $(CURRENT_DIR)/rootfs
 rootfs_target := $(CONFIG_DIR)/rootfs_nopasswd.cpio
 
+# OP-TEE Variables
+optee_os_srcdir := $(CURRENT_DIR)/optee_os
+optee_os_builddir := $(BUILD_DIR)/optee_os
+optee_os_bin := $(optee_os_builddir)/core/tee.bin
+optee_os_elf := $(optee_os_builddir)/core/tee.elf
+optee_os_tddram_start := 0x81000000
+optee_os_tddram_size := 0x1000000
+
 ###########
 # qemu
 ###########
@@ -65,9 +73,18 @@ $(linux_builddir)/.config:
 	rm -f $(linux_srcdir)/arch/riscv/configs/xiangshan.config
 
 ###########
+# OT-TEE
+###########
+.PHONY: optee_os
+optee_os:
+	mkdir -p $(optee_os_builddir)
+	$(MAKE) -C $(optee_os_srcdir) O=$(optee_os_builddir) -j $(NPROC) \
+	ARCH=riscv PLATFORM=virt
+
+###########
 # clean
 ###########
-.PHONY: qemu-clean qemu-distclean linux-clean linux-distclean
+.PHONY: qemu-clean qemu-distclean linux-clean linux-distclean optee_os-clean
 qemu-clean:
 	$(MAKE) -C $(qemu_builddir) clean
 
@@ -79,3 +96,6 @@ linux-clean:
 
 linux-distclean:
 	rm -rf $(linux_builddir)
+
+optee_os-clean:
+	rm -rf $(optee_os_builddir)
