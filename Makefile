@@ -25,6 +25,7 @@ rootfs_target := $(CONFIG_DIR)/rootfs_nopasswd.cpio
 # OP-TEE Variables
 optee_os_srcdir := $(CURRENT_DIR)/optee_os
 optee_os_builddir := $(BUILD_DIR)/optee_os
+optee_os_platdir := $(CONFIG_DIR)/plat-nanhu/
 optee_os_bin := $(optee_os_builddir)/core/tee.bin
 optee_os_elf := $(optee_os_builddir)/core/tee.elf
 optee_os_tddram_start := 0x81000000
@@ -78,8 +79,10 @@ $(linux_builddir)/.config:
 .PHONY: optee_os
 optee_os:
 	mkdir -p $(optee_os_builddir)
+	cp -rf $(optee_os_platdir) $(optee_os_srcdir)/core/arch/riscv/
 	$(MAKE) -C $(optee_os_srcdir) O=$(optee_os_builddir) -j $(NPROC) \
-	ARCH=riscv PLATFORM=virt
+	ARCH=riscv PLATFORM=nanhu
+	rm -rf $(optee_os_srcdir)/core/arch/riscv/plat-nanhu
 
 ###########
 # clean
@@ -99,3 +102,4 @@ linux-distclean:
 
 optee_os-clean:
 	rm -rf $(optee_os_builddir)
+	rm -rf $(optee_os_srcdir)/core/arch/riscv/plat-nanhu
