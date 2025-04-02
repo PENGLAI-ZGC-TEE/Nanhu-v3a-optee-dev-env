@@ -18,6 +18,10 @@ linux_config := $(CONFIG_DIR)/xiangshan.config
 linux_vmlinux := $(linux_builddir)/vmlinux
 linux_image := $(linux_builddir)/arch/riscv/boot/Image
 
+# Rootfs Variables
+rootfs_srcdir := $(CURRENT_DIR)/rootfs
+rootfs_target := $(CONFIG_DIR)/rootfs_nopasswd.cpio
+
 ###########
 # qemu
 ###########
@@ -31,12 +35,27 @@ $(qemu_builddir)/config-host.mak:
 	$(qemu_srcdir)/configure $(qemu_config_args)
 
 ###########
+# rootfs
+###########
+.PHONY: rootfs-extract rootfs-pack
+rootfs-extract: $(rootfs_target)
+	rm -rf $(rootfs_srcdir)
+	mkdir -p $(rootfs_srcdir)
+	fakeroot sh -c 'cd $(rootfs_srcdir) && cpio -imdv < $(rootfs_target)'
+
+rootfs-pack: $(rootfs_srcdir)
+	rm -rf $(rootfs_target)
+	fakeroot sh -c 'cd $(rootfs_srcdir) && find . | cpio -o -H newc > $(rootfs_target)'
+
+###########
 # linux
 ###########
 .PHONY: linux
-linux: $(linux_builddir)/.config
+linux: $(linux_builddir)/.config $(rootfs_target)
+	cp -f $(rootfs_target) $(linux_srcdir)/
 	$(MAKE) -C $(linux_srcdir) O=$(linux_builddir) -j $(NPROC) \
 	ARCH=riscv CROSS_COMPILE=$(CROSS_COMPILE)
+	rm -f $(linux_srcdir)/rootfs_nopasswd.cpio
 
 $(linux_builddir)/.config:
 	mkdir -p $(dir $@)

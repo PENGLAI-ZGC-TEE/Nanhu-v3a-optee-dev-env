@@ -8,3 +8,6 @@ build/
 
 # IDE/Editor files  
 .vscode/
+
+# Rootfs
+rootfs/
