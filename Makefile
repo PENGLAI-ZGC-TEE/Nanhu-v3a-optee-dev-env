@@ -17,6 +17,7 @@ linux_builddir := $(BUILD_DIR)/linux
 linux_config := $(CONFIG_DIR)/xiangshan.config
 linux_vmlinux := $(linux_builddir)/vmlinux
 linux_image := $(linux_builddir)/arch/riscv/boot/Image
+linux_start := 0x82000000
 
 # Rootfs Variables
 rootfs_srcdir := $(CURRENT_DIR)/rootfs
@@ -34,6 +35,14 @@ optee_os_bin := $(optee_os_builddir)/core/tee.bin
 optee_os_elf := $(optee_os_builddir)/core/tee.elf
 optee_os_tddram_start := 0x81000000
 optee_os_tddram_size := 0x1000000
+
+# OpenSBI Variables
+opensbi_srcdir := $(CURRENT_DIR)/opensbi
+opensbi_builddir := $(BUILD_DIR)/opensbi
+opensbi_bindir := $(opensbi_builddir)/platform/generic/firmware
+opensbi_jump_bin := $(opensbi_bindir)/fw_jump.bin
+opensbi_jump_elf := $(opensbi_bindir)/fw_jump.elf
+opensbi_start := 0x80000000
 
 ###########
 # qemu
@@ -96,9 +105,22 @@ optee_os:
 	rm -rf $(optee_os_srcdir)/core/arch/riscv/plat-nanhu
 
 ###########
+# opensbi
+###########
+.PHONY: opensbi
+opensbi: $(dtb_file)
+	mkdir -p $(opensbi_builddir)
+	$(MAKE) -C $(opensbi_srcdir) O=$(opensbi_builddir) -j $(NPROC) \
+	CROSS_COMPILE=$(CROSS_COMPILE) \
+	PLATFORM=generic \
+	FW_TEXT_START=$(opensbi_start) \
+	FW_FDT_PATH=$(dtb_file) \
+	FW_JUMP_ADDR=$(linux_start)
+
+###########
 # clean
 ###########
-.PHONY: qemu-clean qemu-distclean linux-clean linux-distclean optee_os-clean dtb-clean
+.PHONY: qemu-clean qemu-distclean linux-clean linux-distclean optee_os-clean dtb-clean opensbi-clean
 qemu-clean:
 	$(MAKE) -C $(qemu_builddir) clean
 
@@ -117,3 +139,6 @@ optee_os-clean:
 
 dtb-clean:
 	rm -f $(dtb_file)
+
+opensbi-clean:
+	rm -rf $(opensbi_builddir)
