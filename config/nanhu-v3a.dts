@@ -34,6 +34,7 @@
 			status = "okay";
 			timebase-frequency = <24000000>;
 			tlb-split;
+			opensbi-domain = <&tdomain>;
 
 			cpu0_intc: interrupt-controller {
 				#interrupt-cells = <1>;
@@ -63,6 +64,7 @@
 			status = "okay";
 			timebase-frequency = <24000000>;
 			tlb-split;
+			opensbi-domain = <&tdomain>;
 
 			cpu1_intc: interrupt-controller {
 				#interrupt-cells = <1>;
@@ -227,5 +229,44 @@
 	chosen {
                 bootargs = "console=ttyS0,115200 earlycon";
 		stdout-path = "serial0:115200n8";
+
+		opensbi-domains {
+			compatible = "opensbi,domain,config";
+
+			tmem: tmem {
+				compatible = "opensbi,domain,memregion";
+				base = <0x0 0x81000000>;
+				order = <24>; // 16MiB
+			};
+
+			allmem: allmem {
+				compatible = "opensbi,domain,memregion";
+				base = <0x0 0x0>;
+				order = <64>;
+			};
+
+			tdomain: trusted-domain {
+				compatible = "opensbi,domain,instance";
+				possible-harts = <&cpu0 &cpu1>;
+				regions = <&allmem 0x3f>;
+				next-addr = <0x0 0x81000000>; /* optee_os: CFG_TDDRAM_START */
+				next-mode = <0x1>;
+			};
+
+			udomain: untrusted-domain {
+				compatible = "opensbi,domain,instance";
+				possible-harts = <&cpu0 &cpu1>;
+				regions = <&tmem 0x0>, <&allmem 0x3f>;
+				boot-hart = <&cpu0>;
+				next-addr = <0x0 0x82000000>; /* Linux kernel start address */
+				next-mode = <0x1>;
+			};
+		};
+	};
+
+	sbi-mpxy-opteed {
+		opensbi-domain-instance = <&tdomain>;
+		riscv,sbi-mpxy-channel-id = <0x02>;
+		compatible = "riscv,sbi-mpxy-opteed";
 	};
 };
