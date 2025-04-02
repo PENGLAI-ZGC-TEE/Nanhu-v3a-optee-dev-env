@@ -101,7 +101,7 @@
 			riscv,ndev = <128>;
 		};
 
-		clkc: misc_clk_0 {
+		/*clkc: misc_clk_0 {
 			#clock-cells = <0>;
 			clock-frequency = <100000000>;
 			compatible = "fixed-clock";
@@ -204,7 +204,7 @@
                         clock-frequency = <100000>;
                         clocks = <&i2c0_clock>;
                         status = "okay";
-                };
+                };*/
 
 		uart0: serial@50000 {
 			compatible = "ns16550a";
