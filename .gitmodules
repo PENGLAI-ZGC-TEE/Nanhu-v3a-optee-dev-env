@@ -1,0 +1,3 @@
+[submodule "qemu"]
+	path = qemu
+	url = https://github.com/PENGLAI-ZGC-TEE/qemu.git
