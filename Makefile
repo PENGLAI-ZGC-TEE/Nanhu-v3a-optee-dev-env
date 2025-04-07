@@ -47,6 +47,35 @@ opensbi_jump_elf := $(opensbi_bindir)/fw_jump.elf
 opensbi_start := 0x80000000
 
 ###########
+# help
+###########
+.PHONY: all help
+all: help
+
+help:
+	@echo "Makefile for developing and testing the OP-TEE OS on BOSC Xiangshan Nanhu-v3a platform"
+	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Targets:"
+	@echo "  help             Display help messages"
+	@echo "  qemu             Build QEMU"
+	@echo "  linux            Build Linux kernel"
+	@echo "  optee_os         Build OP-TEE OS"
+	@echo "  opensbi          Build OpenSBI"
+	@echo "  dtb              Generate Device Tree Blob (DTB)"
+	@echo "  rootfs-extract   Extract root filesystem from cpio archive"
+	@echo "  rootfs-pack      Pack root filesystem into cpio archive"
+	@echo "  run              Run QEMU with the built images"
+	@echo "  debug            Run QEMU with debugging enabled"
+	@echo "  qemu-clean       Clean QEMU build directory"
+	@echo "  qemu-distclean   Clean QEMU build directory and remove all generated files"
+	@echo "  linux-clean      Clean Linux kernel build directory"
+	@echo "  linux-distclean  Clean Linux kernel build directory and remove all generated files"
+	@echo "  optee_os-clean   Clean OP-TEE OS build directory"
+	@echo "  dtb-clean        Clean generated Device Tree Blob (DTB)"
+	@echo "  opensbi-clean    Clean OpenSBI build directory"
+
+###########
 # qemu
 ###########
 .PHONY: qemu
