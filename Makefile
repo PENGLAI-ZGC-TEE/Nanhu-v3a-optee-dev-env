@@ -104,11 +104,9 @@ rootfs-pack: $(rootfs_srcdir)
 # linux
 ###########
 .PHONY: linux
-linux: $(linux_builddir)/.config $(rootfs_target)
-	cp -f $(rootfs_target) $(linux_srcdir)/
+linux: $(linux_builddir)/.config
 	$(MAKE) -C $(linux_srcdir) O=$(linux_builddir) -j $(NPROC) \
 	ARCH=riscv CROSS_COMPILE=$(CROSS_COMPILE)
-	rm -f $(linux_srcdir)/rootfs_nopasswd.cpio
 
 $(linux_builddir)/.config:
 	mkdir -p $(dir $@)
@@ -188,6 +186,7 @@ linux-clean:
 
 linux-distclean:
 	rm -rf $(linux_builddir)
+	$(MAKE) -C $(linux_srcdir) mrproper
 
 optee_os-clean:
 	rm -rf $(optee_os_builddir)
