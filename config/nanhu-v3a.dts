@@ -30,7 +30,7 @@
 			mmu-type = "riscv,sv39";
 			next-level-cache = <&memory>;
 			reg = <0x0>;
-			riscv,isa = "rv64imafdcv";
+			riscv,isa = "rv64imafdc";
 			status = "okay";
 			timebase-frequency = <24000000>;
 			tlb-split;
@@ -60,7 +60,7 @@
 			mmu-type = "riscv,sv39";
 			next-level-cache = <&memory>;
 			reg = <0x1>;
-			riscv,isa = "rv64imafdcv";
+			riscv,isa = "rv64imafdc";
 			status = "okay";
 			timebase-frequency = <24000000>;
 			tlb-split;
@@ -101,18 +101,13 @@
 			riscv,ndev = <128>;
 		};
 
-		/*clkc: misc_clk_0 {
+		clkc: misc_clk_0 {
 			#clock-cells = <0>;
 			clock-frequency = <100000000>;
 			compatible = "fixed-clock";
 		};
-		clkb: misc_clk_1 {
-			#clock-cells = <0>;
-			clock-frequency = <25000000>;
-			compatible = "fixed-clock";
-		};
                   
-                ethernet0: ethernet@190000 {
+                ethernet1: ethernet@190000 {
                         compatible = "st,stm32-dwmac", "snps,dwmac-3.50a";
                         reg = <0 0x190000 0 0x10000>;
                         reg-names = "stmmaceth";
@@ -121,90 +116,41 @@
                         interrupt-names = "eth_lpi", "macirq", "eth_wake_irq";
                         clock-names = "stmmaceth";
                         clocks = <&clkc>;
+                        //st,syscon = <&syscfg 0x4>;
                         snps,pbl = <2>;
                         snps,mixed-burst;
                         phy-mode = "rgmii";
-                        phy-handle = <&phy0>;
-                        mdio0: midi-bus@0 {
-                             #address-cells = <0x1>;
-                             #size-cells = <0x0>;
-                             compatible = "snps,dwmac-mdio";
-                             phy0: phy@0 {
+                        // stmmac driver can not find phy if add this node
+                        //
+                        phy-handle = <&phy>;
+                            mdio {
+                                #address-cells = <0x1>;
+                                #size-cells = <0x0>;
                                 phyaddr = <0x0>;
-                                compatible = "marvell,88E1510";
+                                compatible = "snps,dwmac-mdio";
+                                phy: phy@0 {
+                                //phyaddr = <0x7>;
+                                compatible = "marvell,88e1510";
                                 device_type = "ethernet-phy";
                                 reg = <0x0>;
-                             };
-                             phy1: phy@1 {
-                                phyaddr = <0x1>;
-                                compatible = "marvell,88E1510";
-                                device_type = "ethernet-phy";
-                                reg = <0x1>;
-                             };
-                        };
-                };
-                ethernet1: ethernet@1a0000 {
-                        compatible = "st,stm32-dwmac", "snps,dwmac-3.50a";
-                        reg = <0 0x1a0000 0 0x10000>;
-                        reg-names = "stmmaceth1";
-                        interrupt-parent = <&PLIC>;
-                        interrupts = <73 72 71>;
-                        interrupt-names = "eth_lpi", "macirq", "eth_wake_irq";
-                        clock-names = "stmmaceth";
-                        clocks = <&clkc>;
-                        snps,pbl = <2>;
-                        snps,mixed-burst;
-                        phy-mode = "rgmii";
-                        fixed-link{
-                            speed =  <1000>;
-                            full-duplex;
-                            pause;
-                            asym-pause;
+                            };
                         };
                 };
 
-               sdhci2: sdhci@1200000 {
-	               compatible = "snps,dwcmshc-sdhci";
-	               reg = <0 0x1200000 0 0x20000>;
-	               interrupt-parent = <&PLIC>;
-	               interrupts = <77 78>;
-	               clocks = <&clkb>;
-	               clock-names = "core";
-                       no-1-8-v;
-	               disable-wp;
-	               bus-width = <4>;
-		       max_req_size = <4096>;
-		       status = "okay";
-	       };
 
-               i2c0_clock: i2c0_clck {            
-                        #clock-cells = <0>;
-                        clock-frequency = <100000000>;
-                        compatible = "fixed-clock";
-               };
-            
-               i2c@70000 { 
-                        compatible = "snps,designware-i2c";  
-                        #address-cells = <1>; 
-                        #size-cells = <0>;
-                        reg = <0x0 0x70000 0x0 0x10000>;
-                        interrupts = <66>;
-                        interrupt-parent = <&PLIC>;
-                        clock-frequency = <100000>;
-                        clocks = <&i2c0_clock>;
-                        status = "okay";
-                };
-               i2c@80000 { 
-                        compatible = "snps,designware-i2c";  
-                        #address-cells = <1>; 
-                        #size-cells = <0>;
-                        reg = <0x0 0x80000 0x0 0x10000>;
-                        interrupts = <65>;
-                        interrupt-parent = <&PLIC>;
-                        clock-frequency = <100000>;
-                        clocks = <&i2c0_clock>;
-                        status = "okay";
-                };*/
+                sdhci2: sdhci@1200000 {
+	                compatible = "snps,dwcmshc-sdhci";
+	                reg = <0 0x1200000 0 0x10000>;
+	                interrupt-parent = <&PLIC>;
+	                interrupts = <77>;
+	                clocks = <&clkc>;
+	                clock-names = "core";
+	                sd-uhs-sdr12;
+                        no-1-8-v;
+	                disable-wp;
+                        broken-cd;
+	                bus-width = <4>;
+	        };
 
 		uart0: serial@50000 {
 			compatible = "ns16550a";
@@ -227,7 +173,7 @@
 	};
 
 	chosen {
-                bootargs = "console=ttyS0,115200 earlycon";
+        bootargs = "root=/dev/nfs nfsroot=172.28.3.168:/mnt/ShareFolder ip=172.28.3.100:172.28.3.169:172.28.3.1:255.255.255.0::eth0:off console=ttyS0,115200 earlycon";
 		stdout-path = "serial0:115200n8";
 
 		opensbi-domains {
