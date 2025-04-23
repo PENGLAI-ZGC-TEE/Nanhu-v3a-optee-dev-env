@@ -11,7 +11,7 @@ qemu_builddir := $(BUILD_DIR)/qemu
 qemu_target := $(qemu_builddir)/qemu-system-riscv64
 qemu_config_args := --target-list=riscv64-softmmu
 qemu_machine := -machine bosc-nanhu
-qemu_args := -cpu bosc-nanhu -smp 2 -m 8G
+qemu_args := -cpu bosc-nanhu -smp 1 -m 8G
 
 # Linux Variables
 linux_srcdir := $(CURRENT_DIR)/linux

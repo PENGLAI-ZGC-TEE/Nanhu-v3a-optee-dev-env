@@ -18,8 +18,8 @@ $(call force,CFG_CORE_ASLR,n)
 $(call force,CFG_WITH_STACK_CANARIES,n)
 
 # Hart-related flags
-CFG_TEE_CORE_NB_CORE ?= 2
-CFG_NUM_THREADS ?= 2
+CFG_TEE_CORE_NB_CORE ?= 1
+CFG_NUM_THREADS ?= 1
 $(call force,CFG_BOOT_SYNC_CPU,n)
 
 # SBI-related flags

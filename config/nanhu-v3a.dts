@@ -42,37 +42,6 @@
 				interrupt-controller;
 			};
 		};
-
-		cpu1: cpu@1 {
-			clock-frequency = <0>;
-			compatible = "bosc,nanhu-v3a", "riscv";
-			d-cache-block-size = <64>;
-			d-cache-sets = <64>;
-			d-cache-size = <16384>;
-			d-tlb-sets = <1>;
-			d-tlb-size = <32>;
-			device_type = "cpu";
-			i-cache-block-size = <64>;
-			i-cache-sets = <64>;
-			i-cache-size = <16384>;
-			i-tlb-sets = <1>;
-			i-tlb-size = <32>;
-			mmu-type = "riscv,sv39";
-			next-level-cache = <&memory>;
-			reg = <0x1>;
-			riscv,isa = "rv64imafdcv";
-			status = "okay";
-			timebase-frequency = <24000000>;
-			tlb-split;
-			opensbi-domain = <&tdomain>;
-
-			cpu1_intc: interrupt-controller {
-				#interrupt-cells = <1>;
-				compatible = "riscv,cpu-intc";
-				interrupt-controller;
-			};
-		};
-
 	};
 
 	soc {
@@ -84,7 +53,7 @@
 
 		clint0: clint@38000000 {
 			compatible = "riscv,clint0";
-			interrupts-extended = <&cpu0_intc 3 &cpu0_intc 7 &cpu1_intc 3 &cpu1_intc 7>;
+			interrupts-extended = <&cpu0_intc 3 &cpu0_intc 7>;
 			reg = <0x0 0x38000000 0x0 0x10000>;
 			reg-names = "control";
 			clock-frequency-mhz = <10>;
@@ -94,7 +63,7 @@
 			#interrupt-cells = <1>;
 			compatible = "riscv,plic0";
 			interrupt-controller;
-			interrupts-extended = <&cpu0_intc 0xb &cpu0_intc 0x9 &cpu1_intc 0xb &cpu1_intc 0x9>;
+			interrupts-extended = <&cpu0_intc 0xb &cpu0_intc 0x9>;
 			reg = <0 0x3c000000 0 0x4000000>;
 			reg-names = "control";
 			riscv,max-priority = <7>;
@@ -247,7 +216,7 @@
 
 			tdomain: trusted-domain {
 				compatible = "opensbi,domain,instance";
-				possible-harts = <&cpu0 &cpu1>;
+				possible-harts = <&cpu0>;
 				regions = <&allmem 0x3f>;
 				next-addr = <0x0 0x81000000>; /* optee_os: CFG_TDDRAM_START */
 				next-mode = <0x1>;
@@ -255,7 +224,7 @@
 
 			udomain: untrusted-domain {
 				compatible = "opensbi,domain,instance";
-				possible-harts = <&cpu0 &cpu1>;
+				possible-harts = <&cpu0>;
 				regions = <&tmem 0x0>, <&allmem 0x3f>;
 				boot-hart = <&cpu0>;
 				next-addr = <0x0 0x82000000>; /* Linux kernel start address */
