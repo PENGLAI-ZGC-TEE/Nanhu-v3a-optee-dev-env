@@ -29,14 +29,14 @@
 #ifndef PLIC_BASE
 #define PLIC_BASE		0x3c000000
 #define PLIC_REG_SIZE		0x4000000
-#define PLIC_NUM_SOURCES	128
+#define PLIC_NUM_SOURCES	64
 #endif
 
 /* UART0 */
 #ifndef UART0_BASE
-#define UART0_BASE		0x50000
+#define UART0_BASE		0x310B0000
 #endif
-#define UART0_IRQ		68
+#define UART0_IRQ		40
 
 #define PLAT_THREAD_EXCP_FOREIGN_INTR	\
 	(CSR_XIE_EIE | CSR_XIE_TIE | CSR_XIE_SIE)

@@ -20,6 +20,8 @@ linux_config := $(CONFIG_DIR)/xiangshan.config
 linux_vmlinux := $(linux_builddir)/vmlinux
 linux_image := $(linux_builddir)/arch/riscv/boot/Image
 linux_start := 0x82000000
+linux_offset := 0x2000000
+
 
 # Rootfs Variables
 rootfs_srcdir := $(CURRENT_DIR)/rootfs
@@ -36,7 +38,8 @@ optee_os_platdir := $(CONFIG_DIR)/plat-nanhu/
 optee_os_bin := $(optee_os_builddir)/core/tee.bin
 optee_os_elf := $(optee_os_builddir)/core/tee.elf
 optee_os_tddram_start := 0x81000000
-optee_os_tddram_size := 0x1000000
+optee_os_offset := 0x1000000
+
 
 # OpenSBI Variables
 opensbi_srcdir := $(CURRENT_DIR)/opensbi
@@ -44,7 +47,11 @@ opensbi_builddir := $(BUILD_DIR)/opensbi
 opensbi_bindir := $(opensbi_builddir)/platform/generic/firmware
 opensbi_jump_bin := $(opensbi_bindir)/fw_jump.bin
 opensbi_jump_elf := $(opensbi_bindir)/fw_jump.elf
+opensbi_payload_bin := $(opensbi_bindir)/fw_payload.bin
 opensbi_start := 0x80000000
+
+# merged payload
+merged_payload := $(BUILD_DIR)/merged_payload.bin
 
 ###########
 # help
@@ -138,40 +145,56 @@ optee_os:
 ###########
 # opensbi
 ###########
+$(merged_payload): $(limakenux_image) $(optee_os_bin)
+	rm -rf $@
+	dd if=/dev/zero of=$@ bs=1M count=64 status=none
+	# @echo "  optee_relative_offset = $$((($(optee_os_offset) - $(optee_os_offset)) / 0x100000))"
+	# @echo "  linux_relative_offset = $$((($(linux_offset) - $(optee_os_offset)) / 0x100000))"
+	dd if=$(optee_os_bin) of=$@ seek=$$((($(optee_os_offset) - $(optee_os_offset)) / 0x100000)) conv=notrunc
+	dd if=$(linux_image) of=$@ seek=$$((($(linux_offset) - $(optee_os_offset)) / 0x100000)) conv=notrunc
+
+
+
 .PHONY: opensbi
-opensbi: $(dtb_file)
+opensbi: $(dtb_file) $(merged_payload)
 	mkdir -p $(opensbi_builddir)
 	$(MAKE) -C $(opensbi_srcdir) O=$(opensbi_builddir) -j $(NPROC) \
 	CROSS_COMPILE=$(CROSS_COMPILE) \
 	PLATFORM=generic \
 	FW_TEXT_START=$(opensbi_start) \
 	FW_FDT_PATH=$(dtb_file) \
-	FW_JUMP_ADDR=$(linux_start)
+	FW_PAYLOAD=y \
+	FW_PAYLOAD_PATH=$(merged_payload) \
+	FW_PAYLOAD_ALIGN=0x100000 \
+	FW_PAYLOAD_OFFSET=0x1000000
 
 ##########
 # run
 ##########
 .PHONY: run
-run: $(opensbi_jump_bin) $(optee_os_bin) $(linux_image)
+run: $(opensbi_payload_bin)
 	$(qemu_target) $(qemu_machine) $(qemu_args) \
 	-d guest_errors -D guest_log.txt \
-	-bios $(opensbi_jump_bin) \
-	-device loader,file=$(optee_os_bin),addr=$(optee_os_tddram_start) \
-	-device loader,file=$(linux_image),addr=$(linux_start) \
+	-bios $(opensbi_payload_bin) \
 	-nographic
+	# -bios $(opensbi_jump_bin) \
+	# -device loader,file=$(optee_os_bin),addr=$(optee_os_tddram_start) \
+	# -device loader,file=$(linux_image),addr=$(linux_start) \
+
 
 ##########
 # debug
 ##########
 .PHONY: debug
-debug: $(opensbi_jump_bin) $(optee_os_bin) $(linux_image)
+debug: $(opensbi_payload_bin)
 	$(qemu_target) $(qemu_machine) $(qemu_args) \
 	-d guest_errors -D guest_log.txt \
-	-bios $(opensbi_jump_elf) \
-	-device loader,file=$(optee_os_bin),addr=$(optee_os_tddram_start) \
-	-device loader,file=$(linux_image),addr=$(linux_start) \
+	-bios $(opensbi_payload_bin) \
 	-nographic \
-	-s -S
+	-s -S \
+	# -bios $(opensbi_jump_elf) \
+	# -device loader,file=$(optee_os_bin),addr=$(optee_os_tddram_start) \
+	# -device loader,file=$(linux_image),addr=$(linux_start) \
 
 ###########
 # clean
@@ -197,4 +220,12 @@ dtb-clean:
 	rm -f $(dtb_file)
 
 opensbi-clean:
+	rm -rf $(opensbi_builddir)
+
+clean-all:
+	rm -rf $(qemu_builddir)
+	rm -rf $(linux_builddir)
+	rm -rf $(optee_os_builddir)
+	rm -rf $(optee_os_srcdir)/core/arch/riscv/plat-nanhu
+	rm -f $(dtb_file)
 	rm -rf $(opensbi_builddir)
