@@ -68,11 +68,15 @@ help:
 	@echo "  qemu             Build QEMU"
 	@echo "  linux            Build Linux kernel"
 	@echo "  optee_os         Build OP-TEE OS"
-	@echo "  opensbi          Build OpenSBI"
+	@echo "  opensbi-jump     Build OpenSBI with jump pattern"
+	@echo "  opensbi-payload  Build OpensSBI with payload pattern"
 	@echo "  dtb              Generate Device Tree Blob (DTB)"
 	@echo "  rootfs-extract   Extract root filesystem from cpio archive"
 	@echo "  rootfs-pack      Pack root filesystem into cpio archive"
-	@echo "  run              Run QEMU with the built images"
+	@echo "  run-jump         Run QEMU with one built images, but it's just a jump, won't be packaged together"
+	@echo "  run-payload      Run QEMU with one built images, it will be packaged together"
+	@echo "  run-fpga         Run QEMU with two built images, opensbi + Linux + optee will be merged"
+	@echo "  merge            Merge OpensSBI Linux Op-TEE into one bin according to the specified address range"
 	@echo "  debug            Run QEMU with debugging enabled"
 	@echo "  qemu-clean       Clean QEMU build directory"
 	@echo "  qemu-distclean   Clean QEMU build directory and remove all generated files"
@@ -81,6 +85,8 @@ help:
 	@echo "  optee_os-clean   Clean OP-TEE OS build directory"
 	@echo "  dtb-clean        Clean generated Device Tree Blob (DTB)"
 	@echo "  opensbi-clean    Clean OpenSBI build directory"
+	@echo "  merge-clean      Clean OpenSBI Linux Op-TEE merge file"
+	@echo "  clean-all        Clean all generated file"
 
 ###########
 # qemu
@@ -143,8 +149,9 @@ optee_os:
 	rm -rf $(optee_os_srcdir)/core/arch/riscv/plat-nanhu
 
 ###########
-# opensbi
+# merge
 ###########
+.PHONY: merge
 merge: $(merge_payload_bin)
 
 $(merge_payload_bin): $(opensbi_jump_bin) $(optee_os_bin) $(linux_image) 
@@ -155,7 +162,10 @@ $(merge_payload_bin): $(opensbi_jump_bin) $(optee_os_bin) $(linux_image)
 	dd if=$(linux_image) of=$@ bs=1M seek=$$(($(linux_offset) / 0x100000)) conv=notrunc
 
 
-.PHONY: opensbi
+###########
+# opensbi
+###########
+.PHONY: opensbi-jump opensbi-payload
 opensbi-jump: $(dtb_file) 
 	mkdir -p $(opensbi_builddir)
 	$(MAKE) -C $(opensbi_srcdir) O=$(opensbi_builddir) -j $(NPROC) \
@@ -181,7 +191,7 @@ opensbi-payload: $(dtb_file)
 ##########
 # run
 ##########
-.PHONY: run
+.PHONY: run-jump run-payload run-fpga
 run-jump: $(opensbi_jump_bin) $(optee_os_bin) $(linux_image)
 	$(qemu_target) $(qemu_machine) $(qemu_args) \
 	-d guest_errors -D guest_log.txt \
@@ -208,7 +218,7 @@ run-fpga: $(merge_payload_bin)
 # debug
 ##########
 .PHONY: debug
-debug: $(opensbi_payload_bin)
+debug: $(merge_payload_bin)
 	$(qemu_target) $(qemu_machine) $(qemu_args) \
 	-d guest_errors -D guest_log.txt \
 	-bios $(merge_payload_bin) \
@@ -221,7 +231,7 @@ debug: $(opensbi_payload_bin)
 ###########
 # clean
 ###########
-.PHONY: qemu-clean qemu-distclean linux-clean linux-distclean optee_os-clean dtb-clean opensbi-clean
+.PHONY: qemu-clean qemu-distclean linux-clean linux-distclean optee_os-clean dtb-clean opensbi-clean merge-clean clean-all
 qemu-clean:
 	$(MAKE) -C $(qemu_builddir) clean
 
