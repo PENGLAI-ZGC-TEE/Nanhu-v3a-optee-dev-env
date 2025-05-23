@@ -37,7 +37,7 @@ optee_os_builddir := $(BUILD_DIR)/optee_os
 optee_os_platdir := $(CONFIG_DIR)/plat-nanhu/
 optee_os_bin := $(optee_os_builddir)/core/tee.bin
 optee_os_elf := $(optee_os_builddir)/core/tee.elf
-optee_os_tddram_start := 0x81000000
+optee_os_start := 0x81000000
 optee_os_offset := 0x1000000
 
 
@@ -51,7 +51,7 @@ opensbi_payload_bin := $(opensbi_bindir)/fw_payload.bin
 opensbi_start := 0x80000000
 
 # merged payload
-merged_payload := $(BUILD_DIR)/merged_payload.bin
+merge_payload_bin := $(BUILD_DIR)/merge_payload.bin
 
 ###########
 # help
@@ -145,18 +145,27 @@ optee_os:
 ###########
 # opensbi
 ###########
-$(merged_payload): $(limakenux_image) $(optee_os_bin)
-	rm -rf $@
-	dd if=/dev/zero of=$@ bs=1M count=64 status=none
-	# @echo "  optee_relative_offset = $$((($(optee_os_offset) - $(optee_os_offset)) / 0x100000))"
-	# @echo "  linux_relative_offset = $$((($(linux_offset) - $(optee_os_offset)) / 0x100000))"
-	dd if=$(optee_os_bin) of=$@ seek=$$((($(optee_os_offset) - $(optee_os_offset)) / 0x100000)) conv=notrunc
-	dd if=$(linux_image) of=$@ seek=$$((($(linux_offset) - $(optee_os_offset)) / 0x100000)) conv=notrunc
+merge: $(merge_payload_bin)
 
+$(merge_payload_bin): $(opensbi_jump_bin) $(optee_os_bin) $(linux_image) 
+	rm -rf $@
+	dd if=/dev/zero of=$@ bs=1M count=128 status=none
+	dd if=$(opensbi_jump_bin) of=$@ conv=notrunc
+	dd if=$(optee_os_bin) of=$@ bs=1M seek=$$(($(optee_os_offset) / 0x100000)) conv=notrunc
+	dd if=$(linux_image) of=$@ bs=1M seek=$$(($(linux_offset) / 0x100000)) conv=notrunc
 
 
 .PHONY: opensbi
-opensbi: $(dtb_file) $(merged_payload)
+opensbi-jump: $(dtb_file) 
+	mkdir -p $(opensbi_builddir)
+	$(MAKE) -C $(opensbi_srcdir) O=$(opensbi_builddir) -j $(NPROC) \
+	CROSS_COMPILE=$(CROSS_COMPILE) \
+	PLATFORM=generic \
+	FW_TEXT_START=$(opensbi_start) \
+	FW_FDT_PATH=$(dtb_file) \
+	FW_JUMP_ADDR=$(optee_os_start)
+
+opensbi-payload: $(dtb_file)
 	mkdir -p $(opensbi_builddir)
 	$(MAKE) -C $(opensbi_srcdir) O=$(opensbi_builddir) -j $(NPROC) \
 	CROSS_COMPILE=$(CROSS_COMPILE) \
@@ -164,22 +173,35 @@ opensbi: $(dtb_file) $(merged_payload)
 	FW_TEXT_START=$(opensbi_start) \
 	FW_FDT_PATH=$(dtb_file) \
 	FW_PAYLOAD=y \
-	FW_PAYLOAD_PATH=$(merged_payload) \
+	FW_PAYLOAD_PATH=$(linux_image) \
 	FW_PAYLOAD_ALIGN=0x100000 \
-	FW_PAYLOAD_OFFSET=0x1000000
+	FW_PAYLOAD_OFFSET=0x2000000
+
 
 ##########
 # run
 ##########
 .PHONY: run
-run: $(opensbi_payload_bin)
+run-jump: $(opensbi_jump_bin) $(optee_os_bin) $(linux_image)
+	$(qemu_target) $(qemu_machine) $(qemu_args) \
+	-d guest_errors -D guest_log.txt \
+	-bios $(opensbi_jump_bin) \
+	-device loader,file=$(optee_os_bin),addr=$(optee_os_start) \
+	-device loader,file=$(linux_image),addr=$(linux_start) \
+	-nographic
+
+run-payload: $(opensbi_payload_bin)
 	$(qemu_target) $(qemu_machine) $(qemu_args) \
 	-d guest_errors -D guest_log.txt \
 	-bios $(opensbi_payload_bin) \
 	-nographic
-	# -bios $(opensbi_jump_bin) \
-	# -device loader,file=$(optee_os_bin),addr=$(optee_os_tddram_start) \
-	# -device loader,file=$(linux_image),addr=$(linux_start) \
+
+run-fpga: $(merge_payload_bin)
+	$(qemu_target) $(qemu_machine) $(qemu_args) \
+	-d guest_errors -D guest_log.txt \
+	-bios $(merge_payload_bin) \
+	-nographic
+
 
 
 ##########
@@ -189,11 +211,11 @@ run: $(opensbi_payload_bin)
 debug: $(opensbi_payload_bin)
 	$(qemu_target) $(qemu_machine) $(qemu_args) \
 	-d guest_errors -D guest_log.txt \
-	-bios $(opensbi_payload_bin) \
+	-bios $(merge_payload_bin) \
 	-nographic \
 	-s -S \
 	# -bios $(opensbi_jump_elf) \
-	# -device loader,file=$(optee_os_bin),addr=$(optee_os_tddram_start) \
+	# -device loader,file=$(optee_os_bin),addr=$(optee_os_start) \
 	# -device loader,file=$(linux_image),addr=$(linux_start) \
 
 ###########
@@ -222,6 +244,9 @@ dtb-clean:
 opensbi-clean:
 	rm -rf $(opensbi_builddir)
 
+merge-clean:
+	rm -rf $(merge_payload_bin)
+
 clean-all:
 	rm -rf $(qemu_builddir)
 	rm -rf $(linux_builddir)
@@ -229,3 +254,4 @@ clean-all:
 	rm -rf $(optee_os_srcdir)/core/arch/riscv/plat-nanhu
 	rm -f $(dtb_file)
 	rm -rf $(opensbi_builddir)
+	rm -rf $(merge_payload_bin)

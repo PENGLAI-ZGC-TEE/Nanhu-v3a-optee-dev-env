@@ -94,7 +94,6 @@
         bootargs = "console=ttyS0,115200 earlycon";
 		stdout-path = "serial0:115200n8";
 
-		next-boot-stage = <0x81000000>;
 		
 		opensbi-domains {
 			compatible = "opensbi,domain,config";

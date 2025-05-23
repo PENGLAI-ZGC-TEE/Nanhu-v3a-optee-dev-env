@@ -40,5 +40,5 @@ supported-ta-targets := ta_rv64
 
 # Memory layout flags
 CFG_TDDRAM_START := 0x81000000
-CFG_TDDRAM_SIZE  := 0x1000000
+CFG_TDDRAM_SIZE  :=  0x1000000
 CFG_TEE_RAM_VA_SIZE ?= 0x00200000
