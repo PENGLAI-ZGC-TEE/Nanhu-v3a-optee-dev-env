@@ -18,18 +18,39 @@ gunzip ./config/rootfs_nopasswd.cpio.gz
 make help
 ```
 
-## Build
+## Build for jump pattern (jump to optee)
 ```
 make qemu
 make optee_os
 make dtb
 make linux
-make opensbi
+make opensbi-jump # jump to optee or linux
+```
+
+## Build for payload pattern (add just linux for payload)
+```
+make qemu
+make optee_os
+make dtb
+make linux
+make opensbi-payload # just opensbi + linux
+```
+
+## Build for fpga pattern (merge opensbi + optee + linux as a bin)
+```
+make qemu
+make optee_os
+make dtb
+make linux
+make opensbi-jump
+make merge
 ```
 
 ## Run
 ```
-make run
+make run-jump # run qemu for jump pattern
+make run-payload # run qemu for payload pattern
+make run-fpga # run qemu for fpga pattern
 ```
 
 ## Debug
