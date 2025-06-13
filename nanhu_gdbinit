@@ -1,0 +1,39 @@
+# filename: nanhu_gdbinit
+# useage: gdb-multiarch -x nanhu_gdbinit
+
+# set arch and byte sequence
+set architecture riscv:rv64
+set endian little
+
+# link to QEMU GDB server
+target remote :1234
+
+# load OpenSBI symbol (fw_jump.elf)
+file ./build/opensbi/platform/generic/firmware/fw_jump.elf
+
+# load Linux kernel symbol (vmlinux)
+add-symbol-file ./build/linux/vmlinux 0x82000000
+
+# load OP-TEE symbol (tee.elf)
+add-symbol-file ./build/optee_os/core/tee.elf 0x81000000
+
+# define useful shortcut commands
+define hook-stop
+    # display current instruction and registers at each stop
+    x/i $pc
+    info registers
+end
+
+# set hard breakpoint
+# hbreak *0x81000000
+hbreak *0x810025da
+hbreak *0x8100c3ce
+
+# Continue execution (uncomment the following if you want to start debugging automatically)
+# continue
+
+# show init over message
+echo "GDB debugging environment initialization completed!\n"
+echo "OpenSBI load addr:        0x80000000\n"
+echo "OP-TEE load addr:         0x81000000\n"
+echo "Linux kernel load addr:   0x82000000\n"
