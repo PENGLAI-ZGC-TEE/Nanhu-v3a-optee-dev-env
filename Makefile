@@ -200,6 +200,15 @@ run-jump: $(opensbi_jump_bin) $(optee_os_bin) $(linux_image)
 	-device loader,file=$(linux_image),addr=$(linux_start) \
 	-nographic
 
+run-jump-gdb: $(opensbi_jump_bin) $(optee_os_bin) $(linux_image)
+	$(qemu_target) $(qemu_machine) $(qemu_args) \
+	-d guest_errors -D guest_log.txt \
+	-s -S \
+	-bios $(opensbi_jump_bin) \
+	-device loader,file=$(optee_os_bin),addr=$(optee_os_start) \
+	-device loader,file=$(linux_image),addr=$(linux_start) \
+	-nographic
+
 run-payload: $(opensbi_payload_bin)
 	$(qemu_target) $(qemu_machine) $(qemu_args) \
 	-d guest_errors -D guest_log.txt \

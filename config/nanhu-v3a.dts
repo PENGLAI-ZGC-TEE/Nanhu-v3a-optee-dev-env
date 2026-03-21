@@ -60,6 +60,7 @@
 		};
 
 		PLIC: interrupt-controller@3c000000 {
+			bosc,secure-irqs = <40>;
 			#interrupt-cells = <1>;
 			compatible = "riscv,plic0";
 			interrupt-controller;
