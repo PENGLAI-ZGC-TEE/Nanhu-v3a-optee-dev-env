@@ -192,7 +192,7 @@ opensbi-payload: $(dtb_file)
 # run
 ##########
 .PHONY: run-jump run-payload run-fpga
-run-jump: $(opensbi_jump_bin) $(optee_os_bin) $(linux_image)
+run-jump: qemu $(opensbi_jump_bin) $(optee_os_bin) $(linux_image)
 	$(qemu_target) $(qemu_machine) $(qemu_args) \
 	-d guest_errors -D guest_log.txt \
 	-bios $(opensbi_jump_bin) \
@@ -200,7 +200,7 @@ run-jump: $(opensbi_jump_bin) $(optee_os_bin) $(linux_image)
 	-device loader,file=$(linux_image),addr=$(linux_start) \
 	-nographic
 
-run-jump-gdb: $(opensbi_jump_bin) $(optee_os_bin) $(linux_image)
+run-jump-gdb: qemu $(opensbi_jump_bin) $(optee_os_bin) $(linux_image)
 	$(qemu_target) $(qemu_machine) $(qemu_args) \
 	-d guest_errors -D guest_log.txt \
 	-s -S \

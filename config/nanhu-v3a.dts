@@ -61,6 +61,9 @@
 
 		PLIC: interrupt-controller@3c000000 {
 			bosc,secure-irqs = <40>;
+			bosc,sec-src-offset = <0x00010000>;
+			bosc,world-state-offset = <0x00011000>;
+			bosc,irq-track-offset = <0x00012000>;
 			#interrupt-cells = <1>;
 			compatible = "riscv,plic0";
 			interrupt-controller;
