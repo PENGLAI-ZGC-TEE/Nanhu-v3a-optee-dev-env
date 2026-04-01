@@ -74,8 +74,10 @@ help:
 	@echo "  rootfs-extract   Extract root filesystem from cpio archive"
 	@echo "  rootfs-pack      Pack root filesystem into cpio archive"
 	@echo "  run-jump         Run QEMU with one built images, but it's just a jump, won't be packaged together"
+	@echo "  run-secirq       Build OpenSBI+DTB and run QEMU to see secure-IRQ logs"
 	@echo "  run-payload      Run QEMU with one built images, it will be packaged together"
 	@echo "  run-fpga         Run QEMU with two built images, opensbi + Linux + optee will be merged"
+	@echo "  secirq           Build OpenSBI+DTB for secure-IRQ debug"
 	@echo "  merge            Merge OpensSBI Linux Op-TEE into one bin according to the specified address range"
 	@echo "  debug            Run QEMU with debugging enabled"
 	@echo "  qemu-clean       Clean QEMU build directory"
@@ -195,6 +197,27 @@ opensbi-payload: $(dtb_file)
 run-jump: qemu $(opensbi_jump_bin) $(optee_os_bin) $(linux_image)
 	$(qemu_target) $(qemu_machine) $(qemu_args) \
 	-d guest_errors -D guest_log.txt \
+	-bios $(opensbi_jump_bin) \
+	-device loader,file=$(optee_os_bin),addr=$(optee_os_start) \
+	-device loader,file=$(linux_image),addr=$(linux_start) \
+	-nographic
+
+.PHONY: secirq run-secirq
+secirq: opensbi-jump dtb
+	@echo "OpenSBI+DTB built. Run: make run-secirq"
+
+run-secirq: opensbi-jump dtb
+	$(qemu_target) $(qemu_machine) $(qemu_args) \
+	-d guest_errors -D guest_log.txt \
+	-bios $(opensbi_jump_bin) \
+	-device loader,file=$(optee_os_bin),addr=$(optee_os_start) \
+	-device loader,file=$(linux_image),addr=$(linux_start) \
+	-nographic
+
+run-secirq-gdb: opensbi-jump dtb
+	$(qemu_target) $(qemu_machine) $(qemu_args) \
+	-d guest_errors -D guest_log.txt \
+	-s -S \
 	-bios $(opensbi_jump_bin) \
 	-device loader,file=$(optee_os_bin),addr=$(optee_os_start) \
 	-device loader,file=$(linux_image),addr=$(linux_start) \
