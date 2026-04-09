@@ -25,6 +25,7 @@ void boot_secondary_init_intc(void)
 
 void interrupt_main_handler(void)
 {
+	IMSG("OP-TEE 收到来自 OpenSBI 的 secure IRQ，开始假装处理");
 	if (IS_ENABLED(CFG_RISCV_PLIC))
 		plic_it_handle();
 }
