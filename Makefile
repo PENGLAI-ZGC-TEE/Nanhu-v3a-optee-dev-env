@@ -203,10 +203,10 @@ run-jump: qemu $(opensbi_jump_bin) $(optee_os_bin) $(linux_image)
 	-nographic
 
 .PHONY: secirq run-secirq
-secirq: opensbi-jump dtb
+secirq: opensbi-jump dtb optee_os
 	@echo "OpenSBI+DTB built. Run: make run-secirq"
 
-run-secirq: opensbi-jump dtb
+run-secirq: opensbi-jump dtb optee_os
 	$(qemu_target) $(qemu_machine) $(qemu_args) \
 	-d guest_errors -D guest_log.txt \
 	-bios $(opensbi_jump_bin) \
@@ -214,7 +214,7 @@ run-secirq: opensbi-jump dtb
 	-device loader,file=$(linux_image),addr=$(linux_start) \
 	-nographic
 
-run-secirq-gdb: opensbi-jump dtb
+run-secirq-gdb: opensbi-jump dtb optee_os
 	$(qemu_target) $(qemu_machine) $(qemu_args) \
 	-d guest_errors -D guest_log.txt \
 	-s -S \

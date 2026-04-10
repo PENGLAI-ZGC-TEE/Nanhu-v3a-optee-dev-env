@@ -8,6 +8,7 @@
 #include <kernel/boot.h>
 #include <kernel/tee_common_otp.h>
 #include <platform_config.h>
+#include <sbi.h>
 
 register_ddr(DRAM_BASE, DRAM_SIZE);
 
@@ -25,7 +26,14 @@ void boot_secondary_init_intc(void)
 
 void interrupt_main_handler(void)
 {
-	IMSG("OP-TEE 收到来自 OpenSBI 的 secure IRQ，开始假装处理");
-	if (IS_ENABLED(CFG_RISCV_PLIC))
-		plic_it_handle();
+	static const char msg[] =
+		"[optee] vector_fiq_entry reached, secure IRQ handled\r\n";
+
+	/*
+	 * Minimal bring-up path:
+	 * OpenSBI already claimed/completes the secure IRQ in M-context, so
+	 * OP-TEE only prints a marker here and returns through MPXY.
+	 */
+	for (size_t n = 0; n < sizeof(msg) - 1; n++)
+		sbi_dbcn_write_byte(msg[n]);
 }
