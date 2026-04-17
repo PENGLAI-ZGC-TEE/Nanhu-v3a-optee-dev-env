@@ -60,8 +60,8 @@
 		};
 
 		PLIC: interrupt-controller@3c000000 {
-			bosc,secure-irqs = <41>;
-			riscv,secure-irqs = <41>;
+			bosc,secure-irqs = <41 43>;
+			riscv,secure-irqs = <41 43>;
 			bosc,sec-src-offset = <0x00010000>;
 			bosc,world-state-offset = <0x00011000>;
 			bosc,irq-track-offset = <0x00012000>;
@@ -94,6 +94,22 @@
 			interrupt-parent = <&PLIC>;
 			interrupts = <41>;
 			clock-frequency = <50000000>;
+			status = "okay";
+		};
+
+		irqgen_ns: irqgen@30000000 {
+			compatible = "bosc,nanhu-irqgen";
+			reg = <0x0 0x30000000 0x0 0x1000>;
+			interrupt-parent = <&PLIC>;
+			interrupts = <42>;
+			status = "okay";
+		};
+
+		irqgen_sec: irqgen@30001000 {
+			compatible = "bosc,nanhu-irqgen";
+			reg = <0x0 0x30001000 0x0 0x1000>;
+			interrupt-parent = <&PLIC>;
+			interrupts = <43>;
 			status = "okay";
 		};
 	};
