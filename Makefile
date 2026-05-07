@@ -27,6 +27,12 @@ linux_offset := 0x2000000
 rootfs_srcdir := $(CURRENT_DIR)/rootfs
 rootfs_target := $(CONFIG_DIR)/rootfs_nopasswd.cpio
 
+# Host Tool Variables
+nanhu_irq_test_srcdir := $(CURRENT_DIR)/host/nanhu_irq_test
+nanhu_irq_test_builddir := $(BUILD_DIR)/host/nanhu_irq_test
+nanhu_irq_test_bin := $(nanhu_irq_test_builddir)/nanhu_irq_test
+nanhu_irq_test_rootfs := $(rootfs_srcdir)/usr/bin/nanhu_irq_test
+
 # Device Tree Variables
 dts_file := $(CONFIG_DIR)/nanhu-v3a.dts
 dtb_file := $(BUILD_DIR)/nanhu-v3a.dtb
@@ -73,6 +79,7 @@ help:
 	@echo "  dtb              Generate Device Tree Blob (DTB)"
 	@echo "  rootfs-extract   Extract root filesystem from cpio archive"
 	@echo "  rootfs-pack      Pack root filesystem into cpio archive"
+	@echo "  nanhu_irq_test   Build REE userspace IRQ trigger tool"
 	@echo "  run-jump         Run QEMU with one built images, but it's just a jump, won't be packaged together"
 	@echo "  run-secirq       Build OpenSBI+DTB and run QEMU to see secure-IRQ logs"
 	@echo "  run-payload      Run QEMU with one built images, it will be packaged together"
@@ -105,15 +112,27 @@ $(qemu_builddir)/config-host.mak:
 ###########
 # rootfs
 ###########
-.PHONY: rootfs-extract rootfs-pack
+.PHONY: rootfs-extract rootfs-pack nanhu_irq_test nanhu_irq_test-install host-tools
 rootfs-extract: $(rootfs_target)
 	rm -rf $(rootfs_srcdir)
 	mkdir -p $(rootfs_srcdir)
 	fakeroot sh -c 'cd $(rootfs_srcdir) && cpio -imdv < $(rootfs_target)'
 
-rootfs-pack: $(rootfs_srcdir)
+rootfs-pack: $(rootfs_srcdir) $(nanhu_irq_test_rootfs)
 	rm -rf $(rootfs_target)
 	fakeroot sh -c 'cd $(rootfs_srcdir) && find . | cpio -o -H newc > $(rootfs_target)'
+
+host-tools: nanhu_irq_test
+
+nanhu_irq_test: $(nanhu_irq_test_bin)
+
+$(nanhu_irq_test_bin): $(nanhu_irq_test_srcdir)/nanhu_irq_test.c $(nanhu_irq_test_srcdir)/Makefile
+	$(MAKE) -C $(nanhu_irq_test_srcdir) O=$(nanhu_irq_test_builddir) CROSS_COMPILE=$(CROSS_COMPILE)
+
+$(nanhu_irq_test_rootfs): $(nanhu_irq_test_bin)
+	$(MAKE) -C $(nanhu_irq_test_srcdir) O=$(nanhu_irq_test_builddir) CROSS_COMPILE=$(CROSS_COMPILE) DESTDIR=$(rootfs_srcdir) install
+
+nanhu_irq_test-install: $(nanhu_irq_test_rootfs)
 
 ###########
 # linux
