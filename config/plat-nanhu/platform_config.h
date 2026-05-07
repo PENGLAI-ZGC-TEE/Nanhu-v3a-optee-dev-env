@@ -32,6 +32,18 @@
 #define PLIC_NUM_SOURCES	64
 #endif
 
+/* IRQ generator */
+#define NANHU_IRQGEN_NS2_BASE		0x30002000
+#define NANHU_IRQGEN_SEC2_BASE		0x30003000
+#define NANHU_IRQGEN_REG_SIZE		0x1000
+#define NANHU_IRQGEN_TRIGGER		0x0
+
+#ifndef __ASSEMBLER__
+#include <stdbool.h>
+
+void nanhu_irq_test_set_trigger_ns_in_secure_handler(bool enable);
+#endif
+
 /* UART0 */
 #ifndef UART0_BASE
 #define UART0_BASE		0x310B0000
@@ -39,7 +51,8 @@
 #define UART0_IRQ		40
 
 #define PLAT_THREAD_EXCP_FOREIGN_INTR	\
-	(CSR_XIE_EIE | CSR_XIE_TIE | CSR_XIE_SIE)
-#define PLAT_THREAD_EXCP_NATIVE_INTR	(0)
+	(CSR_XIE_TIE | CSR_XIE_SIE)
+#define PLAT_THREAD_EXCP_NATIVE_INTR	\
+	(CSR_XIE_EIE)
 
 #endif /*PLATFORM_CONFIG_H*/

@@ -126,11 +126,11 @@ host-tools: nanhu_irq_test
 
 nanhu_irq_test: $(nanhu_irq_test_bin)
 
-$(nanhu_irq_test_bin): $(nanhu_irq_test_srcdir)/nanhu_irq_test.c $(nanhu_irq_test_srcdir)/Makefile
-	$(MAKE) -C $(nanhu_irq_test_srcdir) O=$(nanhu_irq_test_builddir) CROSS_COMPILE=$(CROSS_COMPILE)
+$(nanhu_irq_test_bin): $(nanhu_irq_test_srcdir)/nanhu_irq_test.c $(nanhu_irq_test_srcdir)/tee_client_api.h $(nanhu_irq_test_srcdir)/Makefile
+	$(MAKE) -C $(nanhu_irq_test_srcdir) O=$(nanhu_irq_test_builddir) CROSS_COMPILE=$(CROSS_COMPILE) ROOTFS=$(rootfs_srcdir)
 
 $(nanhu_irq_test_rootfs): $(nanhu_irq_test_bin)
-	$(MAKE) -C $(nanhu_irq_test_srcdir) O=$(nanhu_irq_test_builddir) CROSS_COMPILE=$(CROSS_COMPILE) DESTDIR=$(rootfs_srcdir) install
+	$(MAKE) -C $(nanhu_irq_test_srcdir) O=$(nanhu_irq_test_builddir) CROSS_COMPILE=$(CROSS_COMPILE) ROOTFS=$(rootfs_srcdir) DESTDIR=$(rootfs_srcdir) install
 
 nanhu_irq_test-install: $(nanhu_irq_test_rootfs)
 
