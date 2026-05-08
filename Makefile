@@ -21,6 +21,8 @@ linux_vmlinux := $(linux_builddir)/vmlinux
 linux_image := $(linux_builddir)/arch/riscv/boot/Image
 linux_start := 0x82000000
 linux_offset := 0x2000000
+# Keep OpenSBI's relocated FDT outside the Linux Image.
+fdt_start := 0x88000000
 
 
 # Rootfs Variables
@@ -194,6 +196,7 @@ opensbi-jump: $(dtb_file)
 	PLATFORM=generic \
 	FW_TEXT_START=$(opensbi_start) \
 	FW_FDT_PATH=$(dtb_file) \
+	FW_JUMP_FDT_ADDR=$(fdt_start) \
 	FW_JUMP_ADDR=$(optee_os_start)
 
 opensbi-payload: $(dtb_file)
@@ -206,6 +209,7 @@ opensbi-payload: $(dtb_file)
 	FW_PAYLOAD=y \
 	FW_PAYLOAD_PATH=$(linux_image) \
 	FW_PAYLOAD_ALIGN=0x100000 \
+	FW_PAYLOAD_FDT_ADDR=$(fdt_start) \
 	FW_PAYLOAD_OFFSET=0x2000000
 
 
