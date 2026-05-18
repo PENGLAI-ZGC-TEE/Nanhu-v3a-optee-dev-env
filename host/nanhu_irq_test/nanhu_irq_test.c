@@ -241,7 +241,13 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	printf(LOG_PREFIX " %s begin\n", cmd->name);
+	printf("[FLOW] BEGIN test=%s backend=%s", cmd->name,
+	       cmd->use_tee ? "TEE" : "REE");
+	if (cmd->use_tee)
+		printf(" pta_cmd=%u\n", cmd->pta_cmd);
+	else
+		printf(" irq=%u mmio=0x%08" PRIx64 " value=0x%x\n",
+		       cmd->irq, cmd->mmio, cmd->value);
 
 	if (cmd->use_tee) {
 		printf(LOG_PREFIX " invoke PTA command=%u\n", cmd->pta_cmd);
@@ -257,7 +263,7 @@ int main(int argc, char **argv)
 	if (fflush(stdout) != 0)
 		return EXIT_FAILURE;
 
-	printf(LOG_PREFIX " %s end\n", cmd->name);
+	printf("[FLOW] END test=%s result=OK\n", cmd->name);
 
 	return EXIT_SUCCESS;
 }

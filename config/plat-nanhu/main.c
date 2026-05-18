@@ -34,6 +34,7 @@ static enum itr_return nanhu_secure_irq_handler(struct itr_handler *h __unused)
 {
 	vaddr_t ns_irqgen = 0;
 
+	IMSG("[TEE-HANDLER] ENTER irq=%u", NANHU_SEC_TEST_IRQ);
 	IMSG("[optee-test] secure irq45 handler begin");
 
 	if (trigger_ns_in_secure_handler) {
@@ -48,6 +49,7 @@ static enum itr_return nanhu_secure_irq_handler(struct itr_handler *h __unused)
 	}
 
 	IMSG("[optee-test] secure irq45 handler end");
+	IMSG("[TEE-HANDLER] EXIT irq=%u", NANHU_SEC_TEST_IRQ);
 
 	return ITRR_HANDLED;
 }
